@@ -67,6 +67,7 @@ type Props = {
   children: ReactElement<any>,
   cols: number,
   containerWidth: number,
+  containerHeight: number,
   margin: [number, number],
   containerPadding: [number, number],
   rowHeight: number,
@@ -130,6 +131,7 @@ export default class GridItem extends React.Component<Props, State> {
     // General grid attributes
     cols: PropTypes.number.isRequired,
     containerWidth: PropTypes.number.isRequired,
+    containerHeight: PropTypes.number.isRequired,
     rowHeight: PropTypes.number.isRequired,
     margin: PropTypes.array.isRequired,
     maxRows: PropTypes.number.isRequired,
@@ -306,6 +308,7 @@ export default class GridItem extends React.Component<Props, State> {
       cols: props.cols,
       containerPadding: props.containerPadding,
       containerWidth: props.containerWidth,
+      containerHeight: props.containerWidth,
       margin: props.margin,
       maxRows: props.maxRows,
       rowHeight: props.rowHeight
@@ -503,9 +506,10 @@ export default class GridItem extends React.Component<Props, State> {
       const { offsetParent } = node;
 
       if (offsetParent) {
-        const { margin, rowHeight, containerPadding } = this.props;
+        const { margin, containerPadding } = this.props;
+        const colHeight = calcGridColWidth(positionParams)
         const bottomBoundary =
-          offsetParent.clientHeight - calcGridItemWHPx(h, rowHeight, margin[1]);
+          offsetParent.clientHeight - calcGridItemWHPx(h, colHeight, margin[1]);
         top = clamp(top - containerPadding[1], 0, bottomBoundary);
 
         const colWidth = calcGridColWidth(positionParams);
@@ -566,8 +570,9 @@ export default class GridItem extends React.Component<Props, State> {
     this.onResizeHandler(e, callbackData, position, "onResizeStart");
 
   // onResize event handler
-  onResize: GridItemResizeCallback = (e, callbackData, position) =>
+  onResize: GridItemResizeCallback = (e, callbackData, position) => {
     this.onResizeHandler(e, callbackData, position, "onResize");
+  }
 
   /**
    * Wrapper around resize events to provide more useful data.
@@ -611,7 +616,6 @@ export default class GridItem extends React.Component<Props, State> {
     // minW should be at least 1 (TODO propTypes validation?)
     w = clamp(w, Math.max(minW, 1), maxW);
     h = clamp(h, minH, maxH);
-
     handler.call(this, i, w, h, { e, node, size: updatedSize, handle });
   }
 
@@ -636,7 +640,6 @@ export default class GridItem extends React.Component<Props, State> {
       this.state
     );
     const child = React.Children.only(this.props.children);
-
     // Create the child element. We clone the existing element but modify its className and style.
     let newChild = React.cloneElement(child, {
       ref: this.elementRef,
